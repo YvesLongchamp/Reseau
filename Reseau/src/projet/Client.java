@@ -13,14 +13,14 @@ public class Client {
 
 	Client(int i) {
 		this.increment = i;
+		this.answer = 1;
 	}
 
 	public static void main(String[] args) {
-			Client client = new Client(10);
-			client.clientRun();
-			System.out.println(client.getAnswer());
+		Client client = new Client(10);
+		client.clientRun();
 	}
-	
+
 	public void clientRun() {
 		try {
 			Socket clientSocket = new Socket(InetAddress.getLocalHost(), 50000);
@@ -29,19 +29,22 @@ public class Client {
 			Scanner sc = new Scanner(System.in);
 			PrintWriter pw = new PrintWriter(output);
 			pw.println(text);
-			System.out.println("clientRun avant hasnext");
 			pw.flush();
-			sc.hasNext();
-			System.out.println("clientRun aprÃ¨s hasnext");
-			this.answer = Integer.parseInt(sc.nextLine());
+//			String texte2 = sc.nextLine();
+//			this.answer = Integer.parseInt(texte2);
+//			System.out.println("Après le nextLine");
+//			System.out.println("après if");
 			clientSocket.close();
 			sc.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public int getAnswer() {
 		return this.answer;
+	}
+	public void setAnswer(int i) {
+		this.answer = i;
 	}
 }
