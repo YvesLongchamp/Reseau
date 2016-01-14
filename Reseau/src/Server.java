@@ -1,4 +1,4 @@
-package projet;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +9,11 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Server {
+	private ServerSocket serverSocket;
+	
+	Server(ServerSocket serverSocket) {
+		this.serverSocket = serverSocket;
+	}
 	public class ClientThread extends Thread {
 		private Socket socket;
 		private InputStream input;
@@ -26,22 +31,20 @@ public class Server {
 		@Override
 		public void run() {
 			Scanner sc = new Scanner(input);
-			sc.hasNext();
-			String text = sc.nextLine();
+			String text = "";
+			if (sc.hasNext()) {
+				text = sc.nextLine();
+			}
 			int increment = Integer.parseInt(text);
 			PrintWriter pw = new PrintWriter(output);
 			if (increment == 0) {
-				System.out.println("pwait");
 				pw.println(1);
 			} else {
-				System.out.println(increment);
-				Client client = new Client(increment - 1);
+				Client client = new Client(increment - 1, serverSocket.getLocalPort());
 				client.clientRun();
 				System.out.println(increment);
 				int answer = client.getAnswer();
 				client.setAnswer(answer * increment);
-				System.out.println("answer * increment " + answer);
-				System.out.println("********" + answer * increment);
 				pw.println(answer * increment);
 			}
 			pw.flush();
@@ -58,11 +61,12 @@ public class Server {
 	public static void main(String[] args) {
 		ServerSocket serverSocket = null;
 		try {
-			serverSocket = new ServerSocket(50000);
+			serverSocket = new ServerSocket(Integer.parseInt(args[0]));
+			Server server = new Server(serverSocket);
 
 			while (true) {
 				Socket socketClient = serverSocket.accept();
-				ClientThread clientThread = new Server().new ClientThread(
+				ClientThread clientThread = server.new ClientThread(
 						socketClient);
 				clientThread.start();
 			}

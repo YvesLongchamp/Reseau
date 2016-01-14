@@ -1,4 +1,4 @@
-package projet;
+
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -10,30 +10,33 @@ import java.util.Scanner;
 public class Client {
 	private int increment;
 	private int answer;
+	private int port;
 
-	Client(int i) {
+	Client(int i, int port) {
 		this.increment = i;
 		this.answer = 1;
+		this.port = port;
 	}
 
 	public static void main(String[] args) {
-		Client client = new Client(10);
+		Client client = new Client(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
 		client.clientRun();
+		System.out.println(client.getAnswer());
 	}
 
 	public void clientRun() {
 		try {
-			Socket clientSocket = new Socket(InetAddress.getLocalHost(), 50000);
+			Socket clientSocket = new Socket(InetAddress.getLocalHost(), this.port);
 			PrintStream output = new PrintStream(clientSocket.getOutputStream());
 			String text = Integer.toString(this.increment);
-			Scanner sc = new Scanner(System.in);
+			Scanner sc = new Scanner(clientSocket.getInputStream());
 			PrintWriter pw = new PrintWriter(output);
 			pw.println(text);
 			pw.flush();
-//			String texte2 = sc.nextLine();
-//			this.answer = Integer.parseInt(texte2);
-//			System.out.println("Après le nextLine");
-//			System.out.println("après if");
+			if (sc.hasNext()) {
+				String texte2 = sc.nextLine();
+				this.answer = Integer.parseInt(texte2);
+			}
 			clientSocket.close();
 			sc.close();
 		} catch (IOException e) {
@@ -44,6 +47,7 @@ public class Client {
 	public int getAnswer() {
 		return this.answer;
 	}
+
 	public void setAnswer(int i) {
 		this.answer = i;
 	}
