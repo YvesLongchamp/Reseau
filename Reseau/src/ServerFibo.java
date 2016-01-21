@@ -11,13 +11,15 @@ import java.util.Scanner;
 /**
  * Classe du serveur, pour gerer les clients et pouvoir creer d'autres clients.
  * 
- * @return les resultats aux clients qui demandent un fibonacci, avec un
- *         cache prevu.
+ * @return les resultats aux clients qui demandent un fibonacci, avec un cache
+ *         prevu.
  * 
  */
-public class ServerFibo {
+public class ServerFibo extends Thread {
 	private ServerSocket serverSocket;
-
+	private Hashtable<Integer, Integer> resultats = new Hashtable<Integer, Integer>();
+	private static int port1;
+	private static int port2;
 	/**
 	 * Constructeur du serveur
 	 * 
@@ -70,21 +72,28 @@ public class ServerFibo {
 			}
 			int increment = Integer.parseInt(text);
 			PrintWriter pw = new PrintWriter(output);
-			if (increment == 0) { // Si on arrive a zero, on renvoie le
-									// resultat.
-				pw.println(1);
+			if (increment <= 2) { // Si on est entre 2 et 0, on renvoie 1, sinon
+									// on envoie 0 pour 0.
+				if (increment == 0) {
+					pw.println(0);
+				} else {
+					pw.println(1);
+				}
 			} else {
 				if (resultats.get(increment) == null) {// On verifie si le
 														// resultat est absent
 														// des resultats deja
 														// presents. Si oui, on
 														// le calcule.
-					ClientFacto client = new ClientFacto(increment - 1, serverSocket.getLocalPort());
-					client.clientRun();
-					int answer = client.getAnswer();
-					client.setAnswer(answer * increment);
-					resultats.put(increment - 1, answer);
-					pw.println(answer * increment);
+					ClientFibo client1 = new ClientFibo(increment - 1, port1);
+					ClientFibo client2 = new ClientFibo(increment - 2, port2);
+					//On envoie sur les deux serveurs.
+					client2.clientRun();
+					client1.clientRun();
+					int answer = client1.getAnswer();
+					int answer2 = client2.getAnswer();
+					resultats.put(increment, answer + answer2);
+					pw.println(answer + answer2);
 				} else {// On renvoie le resultat stocke si ce n'est pas le cas.
 					pw.println(resultats.get(increment));
 				}
@@ -102,27 +111,40 @@ public class ServerFibo {
 	}
 
 	public static void main(String[] args) {
-		ServerSocket serverSocket = null;
+		ServerSocket serverSocket1 = null;
+		ServerSocket serverSocket2 = null;
 		try {// Un nouveau serveur avec comme parametre le port donne lors de la
 				// commande.
-			serverSocket = new ServerSocket(Integer.parseInt(args[0]));
-			ServerFibo server = new ServerFibo(serverSocket);
-			Hashtable<Integer, Integer> resultats = new Hashtable<Integer, Integer>();
+			port1 = Integer.parseInt(args[0]);
+			port2 = Integer.parseInt(args[1]);
+			serverSocket1 = new ServerSocket(port1);
+			serverSocket2 = new ServerSocket(port2);
+			ServerFibo server1 = new ServerFibo(serverSocket1);
+			ServerFibo server2 = new ServerFibo(serverSocket2);
+			server1.start();
+			server2.start();
 
-			while (true) {// On accepte tous les clients, et on fait un nouveau
-							// thread a chaque fois.
-				Socket socketClient = serverSocket.accept();
-				ClientThread clientThread = server.new ClientThread(socketClient, resultats);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public void run() {
+		
+		while (true) {// On accepte tous les clients, et on fait un nouveau
+			// thread a chaque fois.
+			Socket socketClient;
+			try {
+				socketClient = this.serverSocket.accept();
+				ClientThread clientThread = this.new ClientThread(socketClient, resultats);
 				clientThread.start();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+			
 		}
-		try {
-			serverSocket.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 	}
 }
